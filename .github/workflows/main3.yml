@@ -1,0 +1,46 @@
+name: AngularTest
+
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Use Node 12.x
+        uses: actions/setup-node@v1
+        with:
+          node-version: '14.x'
+      - name: Install dependencies
+        run: npm ci
+      - name: Run build task
+        run: npm run build --if-present
+      - name: ssh connect to server to backup
+        uses: fifsky/ssh-action@master
+        with: 
+          command: |
+            cp -r /var/www/html/app/ /root/app_backup/
+          host: ${{ secrets.REMOTE_HOST }}
+          user: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY}}
+          # pass: ${{ secrets.PASS }}
+      - name: Deploy to Server
+        uses: easingthemes/ssh-deploy@v2.1.5
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_KEY }}
+          ARGS: "-rltgoDzvO --delete"
+          SOURCE: "dist/"
+          REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+          REMOTE_USER: ${{ secrets.REMOTE_USER }}
+          TARGET: ${{ secrets.REMOTE_TARGET }}
+          EXCLUDE: "/dist/, /node_modules/"

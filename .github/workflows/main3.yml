@@ -29,7 +29,7 @@ jobs:
         uses: fifsky/ssh-action@master
         with: 
           command: |
-            cp -r /var/www/html/app/ /root/app_backup/
+            cp -r /var/www/html/app/ /root/app_backup-$(date +"%d-%m-%Y")/
           host: ${{ secrets.REMOTE_HOST }}
           user: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SERVER_SSH_KEY}}
